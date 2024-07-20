@@ -24,7 +24,7 @@ def res(inp, stride, reshape=False, padding="same",filter_num = 4) -> tf.Tensor:
 # input 1024x1024 image
 # output 4
 def create_model() -> Model:
-    inputs = layers.Input(shape=(1024, 1024, 3))
+    inputs = layers.Input(shape=(128, 128, 3))
     i2 = layers.Conv2D(1, 3)(inputs)
     r1 = res(i2, 1,filter_num = 3)
     r2 = res(r1, 2,filter_num = 3)
