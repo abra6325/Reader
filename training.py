@@ -32,14 +32,14 @@ for i in range(1, NL + 1):
     valname = path + str(i) + ".txt"
     tmp = Image.open(fname)
     tmp = normalize(tmp, str(i))
-    txt = tuple(i / tmp.size[0] for i in map(int, open(valname, "r").read().split()))[0]
+    txt = tuple(i / tmp.size[0] for i in map(int, open(valname, "r").read().split()))
 
-    Y_out.append(txt)
+    Y_out.append(np.asarray(txt).astype(np.float32))
 img_paths_lst = []
 for i in range(1, NL + 1):
     img_paths_lst.append(path2 + str(i) + ".jpg")
 img_paths = pd.Series(img_paths_lst, name="FilePath").astype(str)
-values = pd.Series(Y_out, name="Values").astype(float)
+values = pd.Series(Y_out, name="Values")
 images = pd.concat([img_paths, values], axis=1).sample(frac=1.0, random_state=1).reset_index(drop=True)
 print(images)
 train_gen = keras.preprocessing.image.ImageDataGenerator(
@@ -50,7 +50,7 @@ train_imgs = train_gen.flow_from_dataframe(
     dataframe=images,
     x_col="FilePath",
     y_col="Values",
-    target_size=(1024,1024),
+    target_size=(224,224),
     color_mode="rgb",
     class_mode="raw",
     batch_size=2,
@@ -62,7 +62,7 @@ val_imgs = train_gen.flow_from_dataframe(
     dataframe=images,
     x_col="FilePath",
     y_col="Values",
-    target_size=(1024,1024),
+    target_size=(224,224),
     color_mode="rgb",
     class_mode="raw",
     batch_size=2,
@@ -71,7 +71,7 @@ val_imgs = train_gen.flow_from_dataframe(
     subset="validation"
 )
 
-model = Analysis.create_model()
+model = Analysis.create_model_2()
 model.compile(optimizer="adam", loss=keras.losses.mse, metrics=["accuracy"])
 model.fit(train_imgs, validation_data=val_imgs, epochs=12,
           callbacks=[

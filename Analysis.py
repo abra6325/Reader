@@ -1,6 +1,6 @@
 import tensorflow as tf
 from keras import Sequential, layers, Model
-
+from keras.applications import VGG16
 
 import typing
 
@@ -19,8 +19,6 @@ def res(inp, stride, reshape=False, padding="same",filter_num = 4) -> tf.Tensor:
     x = layers.ReLU()(x)
 
     return x
-
-
 # input 1024x1024 image
 # output 4
 def create_model() -> Model:
@@ -38,5 +36,24 @@ def create_model() -> Model:
     shape = layers.Reshape((1,1))(r9)
     out1 = layers.Dense(1)(shape)
     model = Model(inputs, out1)
+    return model
+def create_model_2()->Model:
+    vgg = VGG16(weights="imagenet", include_top=False,
+                input_tensor=layers.Input(shape=(224, 224, 3)))
+    # freeze all VGG layers so they will *not* be updated during the
+    # training process
+    vgg.trainable = False
+    # flatten the max-pooling output of VGG
+    flatten = vgg.output
+    flatten = layers.Flatten()(flatten)
+    # construct a fully-connected layer header to output the predicted
+    # bounding box coordinates
+    bboxHead = layers.Dense(128, activation="relu")(flatten)
+    bboxHead = layers.Dense(64, activation="relu")(bboxHead)
+    bboxHead = layers.Dense(32, activation="relu")(bboxHead)
+    bboxHead = layers.Dense(4, activation="relu")(bboxHead)
+    bboxHead = layers.Dense(1,activation="sigmoid")(bboxHead)
+    # construct the model we will fine-tune for bounding box regression
+    model = Model(inputs=vgg.input, outputs=bboxHead)
     return model
 create_model().summary()
